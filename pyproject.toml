@@ -1,0 +1,10 @@
+[project]
+name = "iq-playground"
+version = "0.1.0"
+description = "Learning Software Defined Radio by implementing DSP algorithms from scratch."
+requires-python = ">=3.12"
+
+dependencies = [
+    "numpy",
+    "matplotlib",
+]
