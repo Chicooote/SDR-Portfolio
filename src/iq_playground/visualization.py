@@ -4,16 +4,16 @@ import numpy as np
 def plot_iq_time(iq : np.ndarray)-> None:
     """
     Display the in-phase (I) and quadrature (Q) components
-    of a complex IQ signal in the time domain.
+    of a complex IQ signal in the time domain
 
     Parameters
     ----------
     iq : np.ndarray
-        Complex IQ samples.
+        Complex IQ samples
     """
 
     samples = np.arange(len(iq))
-    
+
     # The real part represents the in-phase component (I)
     # The imaginary part represents the quadrature component (Q)
     plt.plot(samples, iq.real, label="I")
@@ -30,15 +30,15 @@ def plot_iq_time(iq : np.ndarray)-> None:
 
 def plot_constellation(iq : np.ndarray)-> None:
     """
-    Display the IQ constellation.
+    Display the IQ constellation
 
-    The x-axis represents the in-phase component (I),
-    and the y-axis represents the quadrature component (Q).
+    The x-axis represents the in-phase component (I)
+    and the y-axis represents the quadrature component (Q)
 
     Parameters
     ----------
     iq : np.ndarray
-        Complex IQ samples.
+        Complex IQ samples
     """
 
     plt.scatter(iq.real, iq.imag, s=10)
