@@ -1,59 +1,22 @@
-# IQ Playground
+# SDR Portfolio
 
-A Software Defined Radio (SDR) learning project using Python and RTL-SDR hardware.
+A collection of Software Defined Radio (SDR) learning projects using Python, exploring IQ signal processing, DSP, and RTL-SDR hardware.
 
-## Objectives
+## Projects
 
-This project aims to learn and implement:
+| Project | Description |
+| --- | --- |
+| [01-iq-playground](projects/01-iq-playground) | IQ tone generation, FFT/spectrum analysis, and RTL-SDR interface architecture. |
+| 02-spectrum-analyzer | Coming soon. |
 
-- IQ signal processing
-- Digital signal processing (DSP)
-- FFT and spectrum analysis
-- RTL-SDR acquisition
-- SDR software architecture
-- GNU Radio concepts
-- C/C++ SDR development
+## Structure
 
-## Current Features
+```
+sdr-portfolio/
+├── README.md
+└── projects/
+    ├── 01-iq-playground/
+    └── 02-spectrum-analyzer/
+```
 
-- Complex IQ tone generation
-- IQ constellation visualization
-- Time-domain visualization
-- FFT spectrum analysis
-- Hann window spectral analysis
-- RTL-SDR interface architecture
-
-## Technologies
-
-- Python 3.12
-- NumPy
-- Matplotlib
-- pyrtlsdr
-- RTL-SDR dongle
-
-## Project Structure
-
-
-src/
-
-└── iq_playground/
-
-├── signal_generator.py
-
-├── visualization.py
-
-├── analysis.py
-
-└── rtl_device.py
-
-
-## Roadmap
-
-- [x] Generate IQ signals
-- [x] FFT spectrum analyzer
-- [x] Spectral leakage study
-- [ ] RTL-SDR live acquisition
-- [ ] Waterfall display
-- [ ] FM demodulator
-- [ ] GNU Radio integration
-- [ ] C++ SDR processing
+Each project is self-contained with its own `README.md`, `src/`, `examples/`, and `pyproject.toml`.
