@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "01-iq-signal-lab"
+version = "0.1.0"
+description = "Experimental laboratory for studying IQ signals and Digital Signal Processing (DSP) techniques used in Software Defined Radio"
+requires-python = ">=3.12"
+
+dependencies = [
+    "numpy",
+    "matplotlib",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
