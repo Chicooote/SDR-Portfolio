@@ -8,7 +8,7 @@ f = 100_000
 N = 1000
 iq = generate_complex_tone(fs, f, N)
 
-file_path = "data/tone_100khz.npy"
+file_path = "01-iq-signal-lab/data/tone_100khz.npy"
 
 # Save IQ samples
 save_iq(iq, file_path)
