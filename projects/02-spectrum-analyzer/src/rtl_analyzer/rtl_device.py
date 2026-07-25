@@ -1,4 +1,4 @@
-from pyrtlsdr import RtlSdr
+from rtlsdr import RtlSdr
 import numpy as np
 
 class RTLDevice:
@@ -15,16 +15,23 @@ class RTLDevice:
         Initialize the RTL-SDR device state
         """
 
-        # Connection state of the dongle
-        self.connected: bool = False
-
         # Hardware interface (created when the device is opened)
+        # This is the single source of truth for the connection state:
+        # there is no separate "connected" flag to keep in sync
         self.sdr: RtlSdr | None = None
 
         # SDR parameters
         self.center_frequency: float | None = None
         self.sample_rate: float | None = None
         self.gain: float | None = None
+
+    @property
+    def is_connected(self) -> bool:
+        """
+        Whether the RTL-SDR dongle is currently open
+        """
+
+        return self.sdr is not None
 
 
     def open(self) -> None:
@@ -33,7 +40,6 @@ class RTLDevice:
         """
 
         self.sdr = RtlSdr()
-        self.connected = True
 
 
     def close(self) -> None:
@@ -44,7 +50,6 @@ class RTLDevice:
         if self.sdr is not None:
             self.sdr.close()
 
-        self.connected = False
         self.sdr = None
 
     def configure(
@@ -68,14 +73,16 @@ class RTLDevice:
             Receiver gain in dB
         """
 
+        if self.sdr is None:
+            raise RuntimeError("RTL-SDR device is not open")
+
         self.center_frequency = center_frequency
         self.sample_rate = sample_rate
         self.gain = gain
 
-        if self.sdr is not None:
-            self.sdr.center_freq = center_frequency
-            self.sdr.sample_rate = sample_rate
-            self.sdr.gain = gain
+        self.sdr.center_freq = center_frequency
+        self.sdr.sample_rate = sample_rate
+        self.sdr.gain = gain
 
 
     def read_samples(self, number_of_samples: int) -> np.ndarray:

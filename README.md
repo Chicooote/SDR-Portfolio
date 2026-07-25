@@ -6,8 +6,8 @@ A collection of Software Defined Radio (SDR) learning projects using Python, exp
 
 | Project | Description |
 | --- | --- |
-| [01-iq-playground](projects/01-iq-playground) | IQ tone generation, FFT/spectrum analysis, and RTL-SDR interface architecture. |
-| 02-spectrum-analyzer | Coming soon. |
+| [01-iq-signal-lab](projects/01-iq-signal-lab) | Simulated IQ tone generation, FFT/spectrum analysis, windowing, and AWGN noise modeling from first principles. |
+| [02-spectrum-analyzer](projects/02-spectrum-analyzer) | Real IQ acquisition from an RTL-SDR dongle, applying the Project 01 FFT pipeline to detect peaks in a live RF band. |
 
 ## Structure
 
@@ -15,7 +15,7 @@ A collection of Software Defined Radio (SDR) learning projects using Python, exp
 sdr-portfolio/
 ├── README.md
 └── projects/
-    ├── 01-iq-playground/
+    ├── 01-iq-signal-lab/
     └── 02-spectrum-analyzer/
 ```
 

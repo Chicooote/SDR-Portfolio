@@ -1,0 +1,6 @@
+{
+  "center_frequency": 100000000,
+  "sample_rate": 2400000,
+  "gain": 20,
+  "number_of_samples": 10000
+}
