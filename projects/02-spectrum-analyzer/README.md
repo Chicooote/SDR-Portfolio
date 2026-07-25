@@ -60,10 +60,7 @@ This is the hardware validation planned at the end of Project 01: the same compl
 ├── pyproject.toml
 ├── src/
 │   └── rtl_analyzer/
-│       ├── rtl_device.py         # RTLDevice: open/configure/read/close
-│       ├── dsp.py                # FFT spectrum (Hann window) + peak detection
-│       ├── visualization.py      # Time-domain, constellation, spectrum plots
-│       └── io.py                 # Save/load IQ samples + JSON metadata sidecar
+│       └── debug.py              # print_acquisition_info: raw sample/parameter dump
 ├── examples/
 │   ├── receive_band.py           # End-to-end: acquire → visualize → FFT → peak
 │   └── save_iq_capture.py        # Acquire, persist, and reload a capture
@@ -71,13 +68,14 @@ This is the hardware validation planned at the end of Project 01: the same compl
 └── images/                       # Generated plots
 ```
 
-`rtl_analyzer` mirrors the single-responsibility layout from Project 01's `iq_playground`, with `rtl_device.py` added as the one module that talks to actual hardware; everything downstream of `read_samples()` treats a real capture exactly like a simulated one.
+The RTL-SDR device wrapper, FFT/peak-detection pipeline, plotting, and IQ+metadata persistence all live in the shared [`sdr_core`](../../shared/sdr_core) package (`sdr_core.io.rtl_sdr`, `sdr_core.dsp`, `sdr_core.visualization`, `sdr_core.io.iq`) — the same code used by Project 01, now exercised against real hardware. `rtl_analyzer` itself only keeps `debug.py`, a small acquisition-debugging helper that isn't reused elsewhere.
 
 ## 6. How to Run
 
-Install the package in editable mode:
+Install the shared package, then this one, in editable mode:
 
 ```bash
+pip install -e ../../shared
 pip install -e .
 ```
 
@@ -88,7 +86,7 @@ python examples/receive_band.py
 python examples/save_iq_capture.py
 ```
 
-`receive_band.py` acquires a block of IQ samples, plots the time-domain signal, constellation and spectrum, and prints the strongest detected peak (relative and absolute RF frequency). `save_iq_capture.py` acquires a capture and round-trips it through `io.save_iq` / `io.load_iq`.
+`receive_band.py` acquires a block of IQ samples, plots the time-domain signal, constellation and spectrum, and prints the strongest detected peak (relative and absolute RF frequency). `save_iq_capture.py` acquires a capture and round-trips it through `sdr_core.io.iq.save_iq` / `load_iq`.
 
 ## 7. Theory
 
@@ -98,17 +96,17 @@ Project 01 generated IQ samples directly from Euler's formula. A real RTL-SDR do
 
 ### 7.2 Relative vs. Absolute Frequency
 
-The FFT only ever sees the signal *after* it has been mixed down to baseband, so `dsp.compute_spectrum_db` naturally produces a frequency axis centered on 0 Hz — a **relative** frequency, offset from whatever the tuner was told to center on. The **absolute** RF frequency a bin corresponds to is recovered with a single addition:
+The FFT only ever sees the signal *after* it has been mixed down to baseband, so `sdr_core.dsp.fft.compute_spectrum_db` naturally produces a frequency axis centered on 0 Hz — a **relative** frequency, offset from whatever the tuner was told to center on. The **absolute** RF frequency a bin corresponds to is recovered with a single addition:
 
 ```python
 freq_absolute = freq_relative + dongle.center_frequency
 ```
 
-This conversion is deliberately kept in `examples/receive_band.py` rather than inside `dsp.py`: the DSP module stays generic and hardware-agnostic (it would work identically on a simulated signal), while the orchestration script is the only place that knows about the specific hardware configuration in use.
+This conversion is deliberately kept in `examples/receive_band.py` rather than inside `sdr_core.dsp`: the DSP module stays generic and hardware-agnostic (it would work identically on a simulated signal), while the orchestration script is the only place that knows about the specific hardware configuration in use.
 
 ### 7.3 Peak Detection
 
-`dsp.find_peak` reports the strongest bin in a spectrum (`argmax` over `spectrum_db`). On a real, populated RF band this is not a signal *identification* — it's simply the loudest thing present, which could be a genuine broadcast carrier, an interferer, or a hardware artifact. Distinguishing those requires the demodulation and protocol context planned for later projects ([Section 14](#14-future-evolution)).
+`sdr_core.dsp.power.find_peak` reports the strongest bin in a spectrum (`argmax` over `spectrum_db`). On a real, populated RF band this is not a signal *identification* — it's simply the loudest thing present, which could be a genuine broadcast carrier, an interferer, or a hardware artifact. Distinguishing those requires the demodulation and protocol context planned for later projects ([Section 14](#14-future-evolution)).
 
 ### 7.4 Quantization and ADC Artifacts
 
@@ -120,7 +118,7 @@ This section describes the modules themselves; a concrete run and its results ar
 
 ### 8.1 Hardware Interface
 
-`RTLDevice` (`rtl_device.py`) wraps `pyrtlsdr.RtlSdr` and tracks connection state through the presence of the underlying `sdr` handle itself (`is_connected`), rather than a separate boolean that could drift out of sync:
+`RTLDevice` (`sdr_core.io.rtl_sdr`) wraps `pyrtlsdr.RtlSdr` and tracks connection state through the presence of the underlying `sdr` handle itself (`is_connected`), rather than a separate boolean that could drift out of sync:
 
 ```python
 dongle = RTLDevice()
@@ -132,11 +130,11 @@ dongle.close()
 
 ### 8.2 Spectrum Analysis
 
-`dsp.compute_spectrum_db` applies the same Hann-windowed FFT pipeline from Project 01 ([Section 7.5–7.6 there](../01-iq-signal-lab/README.md#75-the-discrete-fourier-transform-and-fft)) to real samples, returning a relative frequency axis and the magnitude spectrum in dB. `dsp.find_peak` then scans that spectrum for its strongest bin.
+`sdr_core.dsp.fft.compute_spectrum_db` applies the same Hann-windowed FFT pipeline from Project 01 ([Section 7.5–7.6 there](../01-iq-signal-lab/README.md#75-the-discrete-fourier-transform-and-fft)) to real samples, returning a relative frequency axis and the magnitude spectrum in dB. `sdr_core.dsp.power.find_peak` then scans that spectrum for its strongest bin.
 
 ### 8.3 Visualization
 
-`visualization.py` provides the same time-domain and constellation plots as Project 01, plus `plot_spectrum`, which displays the spectrum in MHz and can highlight a detected peak with its frequency and amplitude annotated on the plot.
+`sdr_core.visualization` provides the same time-domain and constellation plots as Project 01, plus `spectrum.plot_spectrum`, which can highlight a detected peak with its frequency and amplitude annotated on the plot; this example converts the frequency axis to MHz before plotting.
 
 ## 9. Experiments
 
@@ -158,7 +156,7 @@ dongle.close()
 
 ## 10. IQ Data Persistence
 
-`io.save_iq` / `io.load_iq` extend Project 01's `.npy` persistence with a JSON metadata sidecar (`center_frequency`, `sample_rate`, `gain`, `number_of_samples`) saved next to each capture. A raw IQ file is just a block of complex numbers — without the acquisition parameters it was captured under, the same bytes could correspond to any signal, so the sidecar is not optional bookkeeping but part of what makes a capture reproducible and reusable later.
+`sdr_core.io.iq.save_iq` / `load_iq` extend Project 01's `.npy` persistence with an optional JSON metadata sidecar (`center_frequency`, `sample_rate`, `gain`, `number_of_samples`) saved next to each capture whenever a `metadata` dict is passed in. A raw IQ file is just a block of complex numbers — without the acquisition parameters it was captured under, the same bytes could correspond to any signal, so the sidecar is not optional bookkeeping but part of what makes a capture reproducible and reusable later.
 
 ## 11. Results Summary
 
@@ -174,9 +172,9 @@ dongle.close()
 
 ## 12. Difficulties Encountered
 
-- Keeping `dsp.py` hardware-agnostic: it would have been easy to bake `center_frequency` into the spectrum computation, but that would tie generic DSP code to a specific acquisition. Moving the relative-to-absolute conversion into the orchestration script instead kept the module reusable for simulated signals too.
+- Keeping `sdr_core.dsp` hardware-agnostic: it would have been easy to bake `center_frequency` into the spectrum computation, but that would tie generic DSP code to a specific acquisition. Moving the relative-to-absolute conversion into the orchestration script instead kept the module reusable for simulated signals too.
 - Recognizing quantization artifacts as real hardware behavior rather than a bug: the lattice-shaped constellation and stepped time-domain plateaus looked wrong at first, until traced back to the ADC's finite resolution.
-- A raw `.npy` capture is meaningless on its own — losing track of the center frequency or sample rate it was acquired under makes the file useless, which is what motivated the JSON metadata sidecar in `io.py`.
+- A raw `.npy` capture is meaningless on its own — losing track of the center frequency or sample rate it was acquired under makes the file useless, which is what motivated the optional JSON metadata sidecar in `sdr_core.io.iq`.
 
 ## 13. Skills Acquired
 

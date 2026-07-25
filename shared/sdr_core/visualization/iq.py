@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
-import numpy as np 
+import numpy as np
 
-def plot_iq_time(iq : np.ndarray)-> None:
+
+def plot_iq_time(iq: np.ndarray) -> None:
     """
     Display the in-phase (I) and quadrature (Q) components
     of a complex IQ signal in the time domain
@@ -28,7 +29,7 @@ def plot_iq_time(iq : np.ndarray)-> None:
     plt.show()
 
 
-def plot_constellation(iq : np.ndarray)-> None:
+def plot_constellation(iq: np.ndarray) -> None:
     """
     Display the IQ constellation
 

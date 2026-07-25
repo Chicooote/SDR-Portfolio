@@ -60,10 +60,7 @@ Skills targeted: complex-number signal representation, sampling theory, FFT-base
 ├── src/
 │   └── iq_playground/
 │       ├── signal_generator.py   # Complex tone generation
-│       ├── noise.py              # AWGN noise injection
-│       ├── analysis.py           # FFT + spectrum plotting
-│       ├── visualization.py      # Time-domain + constellation plots
-│       └── io.py                 # Save/load IQ samples (.npy)
+│       └── noise.py              # AWGN noise injection
 ├── examples/
 │   ├── generate_tone.py          # End-to-end: generate → visualize → FFT
 │   ├── noise_experiment.py       # Same pipeline with AWGN applied
@@ -72,13 +69,14 @@ Skills targeted: complex-number signal representation, sampling theory, FFT-base
 └── images/                       # Generated plots
 ```
 
-Each module has a single responsibility, so a full experiment in `examples/` is just a composition of small, independently testable functions.
+FFT/windowing, spectrum and constellation plotting, and IQ persistence live in the shared [`sdr_core`](../../shared/sdr_core) package (`sdr_core.dsp`, `sdr_core.visualization`, `sdr_core.io`) so they can be reused unchanged by later projects; only what's specific to this simulation lab (tone generation, AWGN injection) lives here. Each module has a single responsibility, so a full experiment in `examples/` is just a composition of small, independently testable functions.
 
 ## 6. How to Run
 
-Install the package in editable mode:
+Install the shared package, then this one, in editable mode:
 
 ```bash
+pip install -e ../../shared
 pip install -e .
 ```
 
@@ -136,7 +134,7 @@ The DFT converts a block of `N` time-domain samples into `N` frequency-domain bi
 X[k] = Σ(n=0 to N-1) x[n] * e^(-j2πkn/N)
 ```
 
-The **FFT** (Fast Fourier Transform) computes the exact same result as the DFT in `O(N log N)` instead of `O(N²)`. `analysis.compute_fft` performs three steps:
+The **FFT** (Fast Fourier Transform) computes the exact same result as the DFT in `O(N log N)` instead of `O(N²)`. `sdr_core.dsp.fft.compute_fft` performs three steps:
 
 1. Optionally apply a **Hann window** to taper the edges of the sample block (see [7.6](#76-windowing-and-spectral-leakage))
 2. Compute `np.fft.fft` and re-center it with `fftshift` so 0 Hz sits in the middle of the spectrum
@@ -186,15 +184,15 @@ iq = generate_complex_tone(fs, f, N)
 
 ### 8.2 Time-Domain Visualization
 
-`visualization.plot_iq_time` plots `iq.real` (I) and `iq.imag` (Q) against the sample index, so the quadrature relationship between the two components can be inspected directly.
+`sdr_core.visualization.iq.plot_iq_time` plots `iq.real` (I) and `iq.imag` (Q) against the sample index, so the quadrature relationship between the two components can be inspected directly.
 
 ### 8.3 IQ Constellation
 
-`visualization.plot_constellation` plots Q against I, giving a geometric view of amplitude and phase per sample rather than a time series.
+`sdr_core.visualization.iq.plot_constellation` plots Q against I, giving a geometric view of amplitude and phase per sample rather than a time series.
 
 ### 8.4 FFT Spectrum Analysis
 
-`analysis.compute_fft` / the accompanying spectrum plot implement the pipeline described in [7.5](#75-the-discrete-fourier-transform-and-fft), with an optional Hann window applied per [7.6](#76-windowing-and-spectral-leakage).
+`sdr_core.dsp.fft.compute_spectrum_db` / `sdr_core.visualization.spectrum.plot_spectrum` implement the pipeline described in [7.5](#75-the-discrete-fourier-transform-and-fft), with an optional Hann window applied per [7.6](#76-windowing-and-spectral-leakage).
 
 ## 9. Experiments
 
@@ -256,7 +254,7 @@ For reference, the constellation is unaffected by windowing (it's a time-domain 
 
 ## 10. IQ Data Persistence
 
-`io.save_iq` / `io.load_iq` wrap `numpy.save` / `numpy.load` to persist complex IQ arrays as `.npy` files, creating the destination directory if needed. `examples/save_load_iq.py` verifies round-trip integrity by comparing shape and dtype of the saved and reloaded arrays — this is the same format that would be used to store a real hardware capture, which keeps the simulation and future hardware paths interoperable.
+`sdr_core.io.iq.save_iq` / `load_iq` wrap `numpy.save` / `numpy.load` to persist complex IQ arrays as `.npy` files, creating the destination directory if needed. `examples/save_load_iq.py` verifies round-trip integrity by comparing shape and dtype of the saved and reloaded arrays — this is the same format that would be used to store a real hardware capture, which keeps the simulation and future hardware paths interoperable. The same function also accepts an optional `metadata` dict, saved as a JSON sidecar, for callers that need to record acquisition parameters (see [Project 02](../02-spectrum-analyzer)).
 
 ## 11. Results Summary
 

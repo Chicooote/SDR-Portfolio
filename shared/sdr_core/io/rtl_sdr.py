@@ -1,6 +1,7 @@
 from rtlsdr import RtlSdr
 import numpy as np
 
+
 class RTLDevice:
     """
     Interface used to control an RTL-SDR receiver

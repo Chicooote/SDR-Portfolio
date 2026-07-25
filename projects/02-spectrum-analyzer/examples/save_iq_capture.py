@@ -1,5 +1,5 @@
-from rtl_analyzer.rtl_device import RTLDevice
-from rtl_analyzer.io import save_iq, load_iq
+from sdr_core.io.rtl_sdr import RTLDevice
+from sdr_core.io.iq import save_iq, load_iq
 
 dongle = RTLDevice()
 

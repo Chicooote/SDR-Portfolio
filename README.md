@@ -14,9 +14,21 @@ A collection of Software Defined Radio (SDR) learning projects using Python, exp
 ```
 sdr-portfolio/
 ├── README.md
+├── shared/
+│   └── sdr_core/          # DSP, I/O and visualization code shared across projects
 └── projects/
     ├── 01-iq-signal-lab/
     └── 02-spectrum-analyzer/
 ```
 
-Each project is self-contained with its own `README.md`, `src/`, `examples/`, and `pyproject.toml`.
+`shared/sdr_core` holds the FFT/windowing pipeline, IQ persistence, RTL-SDR device wrapper, and plotting helpers that are common to every project, so each project only implements what's actually specific to it. Each project is self-contained with its own `README.md`, `src/`, `examples/`, and `pyproject.toml`, and depends on `sdr_core` as an editable local package.
+
+## Setup
+
+Install the shared package first, then each project you want to run:
+
+```bash
+pip install -e ./shared
+pip install -e ./projects/01-iq-signal-lab
+pip install -e ./projects/02-spectrum-analyzer
+```
